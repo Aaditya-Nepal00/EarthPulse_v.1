@@ -232,10 +232,10 @@ Want to add features or improve the project?
 ## License
 
 This project is free to use, modify, and share.
+
 ---
 
 **Built with ☕ and occasional frustration by Aaditya.**
 
 If you clone this and get it working, drop a star ⭐. If it breaks, file an issue and I'll help. If it works perfectly, assume I got lucky and move on.
 
-Happy visualizing! 🛰️🌍
