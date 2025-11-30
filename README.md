@@ -231,8 +231,7 @@ Want to add features or improve the project?
 
 ## License
 
-This project is free to use, modify, and share. No formal license selected yet—I was too busy playing with satellites to fill out the paperwork.
-
+This project is free to use, modify, and share.
 ---
 
 **Built with ☕ and occasional frustration by Aaditya.**
