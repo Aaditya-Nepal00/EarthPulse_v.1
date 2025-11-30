@@ -4,6 +4,7 @@ Environment-based configuration with placeholder API endpoints
 """
 
 import os
+from datetime import datetime
 from typing import List, Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -22,9 +23,13 @@ class Settings(BaseSettings):
     
     # NASA Earth Observation APIs
     NASA_API_KEY: str = Field(default="your_nasa_api_key_here", env="NASA_API_KEY")
+    NASA_IMAGERY_API_KEY: str = Field(default="your_nasa_imagery_api_key_here", env="NASA_IMAGERY_API_KEY")
     NASA_EO_BASE_URL: str = Field(default="https://earthengine.googleapis.com/v1/", env="NASA_EO_BASE_URL")
     NASA_DISCOVERY_API: str = Field(default="https://api.nasa.gov/access/data/", env="NASA_DISCOVERY_API")
     NASA_EARTH_DATA_API: str = Field(default="https://earthengine.google.com/", env="NASA_EARTH_DATA_API")
+    NASA_GIBS_BASE_URL: str = Field(default="https://gibs.earthdata.nasa.gov", env="NASA_GIBS_BASE_URL")
+    NASA_GIBS_WMS_URL: str = Field(default="https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi", env="NASA_GIBS_WMS_URL")
+    NASA_CMR_BASE_URL: str = Field(default="https://cmr.earthdata.nasa.gov", env="NASA_CMR_BASE_URL")
     
     # Google Earth Engine Configuration
     GEE_PROJECT_ID: str = Field(default="your_gee_project_id", env="GEE_PROJECT_ID")
@@ -88,15 +93,15 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO", env="LOG_LEVEL")
     LOG_FILE: str = Field(default="./logs/app.log", env="LOG_FILE")
     
-    # Mock Data Configuration (Development)
-    USE_MOCK_DATA: bool = Field(default=False, env="USE_MOCK_DATA")
+    # Mock Data Configuration (Fallback only when API unavailable)
+    USE_MOCK_DATA: bool = Field(default=True, env="USE_MOCK_DATA")
     MOCK_DATA_REGION: str = Field(default="nepal_himalayas", env="MOCK_DATA_REGION")
     SIMULATE_API_DELAY: bool = Field(default=True, env="SIMULATE_API_DELAY")
     API_DELAY_MS: int = Field(default=500, env="API_DELAY_MS")
     
     # Environmental Data Configuration
     DATA_YEAR_MIN: int = 2000
-    DATA_YEAR_MAX: int = 2025
+    DATA_YEAR_MAX: int = datetime.now().year
     DEFAULT_REGION: str = "nepal_himalayas"
     
     # Supported Regions

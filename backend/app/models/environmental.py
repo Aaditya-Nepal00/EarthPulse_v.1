@@ -14,6 +14,10 @@ class DataIndicator(str, Enum):
     GLACIER = "glacier"
     URBAN = "urban"
     TEMPERATURE = "temperature"
+    GLOF = "glof"
+    FOREST = "forest"
+    LANDSLIDE = "landslide"
+    EARTHQUAKE = "earthquake"
 
 class Region(str, Enum):
     """Supported geographic regions"""
@@ -84,6 +88,56 @@ class TemperatureData(BaseModel):
     source: DataSource = Field(default=DataSource.MODIS, description="Data source")
     trend: Optional[str] = Field(None, description="Trend direction: warming/cooling/stable")
 
+class GLOFData(BaseModel):
+    """Glacial Lake Outburst Flood risk data"""
+    year: int = Field(..., ge=2000, le=2025)
+    region: Region
+    risk_level: str = Field(..., description="Low, Medium, High, Critical")
+    lake_area_km2: float
+    expansion_rate: float
+    data_points: List[EnvironmentalDataPoint] = Field(default_factory=list)
+    source: DataSource = Field(default=DataSource.SENTINEL)
+    trend: Optional[str] = Field(None, description="Trend direction: increasing/decreasing/stable")
+
+class ForestData(BaseModel):
+    """Forest coverage and health data"""
+    year: int = Field(..., ge=2000, le=2025)
+    region: Region
+    forest_cover_km2: float
+    deforestation_rate: float
+    illegal_logging_hotspots: int
+    community_forest_area: float
+    data_points: List[EnvironmentalDataPoint] = Field(default_factory=list)
+    source: DataSource = Field(default=DataSource.LANDSAT)
+    trend: Optional[str] = Field(None, description="Trend direction: increasing/decreasing/stable")
+
+class LandslideData(BaseModel):
+    """Landslide susceptibility data"""
+    year: int = Field(..., ge=2000, le=2025)
+    region: Region
+    susceptibility_index: float = Field(..., ge=0, le=1)
+    high_risk_area_km2: float
+    rainfall_correlation: float
+    data_points: List[EnvironmentalDataPoint] = Field(default_factory=list)
+    source: DataSource = Field(default=DataSource.OTHER)
+    trend: Optional[str] = Field(None, description="Trend direction: increasing/decreasing/stable")
+    
+    @property
+    def risk_index(self) -> float:
+        """Alias for susceptibility_index for frontend compatibility"""
+        return self.susceptibility_index
+
+class EarthquakeRecoveryData(BaseModel):
+    """Post-earthquake vegetation recovery data"""
+    year: int = Field(..., ge=2000, le=2025)
+    region: Region
+    recovery_percentage: float
+    scar_visibility_index: float
+    vegetation_regrowth_rate: float
+    data_points: List[EnvironmentalDataPoint] = Field(default_factory=list)
+    source: DataSource = Field(default=DataSource.MODIS)
+    trend: Optional[str] = Field(None, description="Trend direction: increasing/decreasing/stable")
+
 class TemporalComparison(BaseModel):
     """Temporal comparison data for multiple years"""
     indicator: DataIndicator = Field(..., description="Environmental indicator")
@@ -110,6 +164,10 @@ class EnvironmentalSummary(BaseModel):
     glacier_data: Optional[GlacierData] = None
     urban_data: Optional[UrbanData] = None
     temperature_data: Optional[TemperatureData] = None
+    glof_data: Optional[GLOFData] = None
+    forest_data: Optional[ForestData] = None
+    landslide_data: Optional[LandslideData] = None
+    earthquake_data: Optional[EarthquakeRecoveryData] = None
     
 class ComparisonResult(BaseModel):
     """Comparison result between two periods or regions"""
@@ -124,7 +182,7 @@ class ComparisonResult(BaseModel):
     change_percentage: float = Field(..., description="Percentage change")
     trend_summary: str = Field(..., description="Human-readable trend summary")
     impact_assessment: Optional[str] = Field(None, description="Assessment of environmental impact")
-
+    
 class DataValidation(BaseModel):
     """Data quality and validation information"""
     completeness: float = Field(..., ge=0, le=100, description="Data completeness percentage")

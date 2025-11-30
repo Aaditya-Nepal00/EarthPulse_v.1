@@ -6,6 +6,7 @@ Provides map tile endpoints and geographic data services
 from fastapi import APIRouter, Query, HTTPException
 from typing import List, Dict, Optional
 from pydantic import BaseModel
+import logging
 
 from app.models.geographic import get_region_info, get_region_boundary, get_region_center
 from app.models.environmental import Region
@@ -13,6 +14,8 @@ from app.config.settings import settings
 from fastapi.responses import StreamingResponse
 import httpx
 import io
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -333,19 +336,40 @@ async def get_gibs_snapshot(
     height: int = Query(default=400, ge=64, le=2000),
     bbox: str = Query(default="26,80,30.5,88.5", description="minLat,minLon,maxLat,maxLon for EPSG:4326")
 ):
-    """Proxy a NASA GIBS WMS GetMap image for a given date and region.
-    Defaults to Nepal Himalayas bbox and 600x400 size. No Mapbox required.
+    """Get real-time satellite imagery from NASA GIBS.
+    Uses configured NASA imagery API key if available.
+    Defaults to Nepal Himalayas bbox and 600x400 size.
     """
+    from app.services.nasa_api import nasa_client
+    
     # Validate bbox format
     try:
         parts = [float(x) for x in bbox.split(",")]
         if len(parts) != 4:
             raise ValueError
+        bbox_tuple = (parts[0], parts[1], parts[2], parts[3])  # min_lat, min_lon, max_lat, max_lon
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid bbox format. Use 'minLat,minLon,maxLat,maxLon'")
 
+    # Try to get image from NASA service first
+    try:
+        image_data = await nasa_client.get_satellite_image(
+            layer=layer,
+            year=year,
+            month=month,
+            day=day,
+            bbox=bbox_tuple,
+            width=width,
+            height=height
+        )
+        
+        if image_data:
+            return StreamingResponse(io.BytesIO(image_data), media_type="image/png")
+    except Exception as e:
+        logger.warning(f"NASA service failed, falling back to direct GIBS: {e}")
+
+    # Fallback to direct GIBS call
     date_str = f"{year:04d}-{month:02d}-{day:02d}"
-    # GIBS best WMS in EPSG:4326
     base_url = "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi"
     params = {
         "service": "WMS",
@@ -361,9 +385,19 @@ async def get_gibs_snapshot(
         "bbox": bbox,
         "time": date_str
     }
+    
+    # Add API key if configured
+    headers = {"User-Agent": "Earth-Observation-Visualizer/1.0"}
+    if nasa_client.imagery_api_key and nasa_client.imagery_api_key != "your_nasa_imagery_api_key_here":
+        # Use Bearer token in headers if it's a JWT (longer than 50 chars)
+        if len(nasa_client.imagery_api_key) > 50:
+            headers["Authorization"] = f"Bearer {nasa_client.imagery_api_key}"
+        else:
+            # Short tokens go in query params
+            params["token"] = nasa_client.imagery_api_key
 
     try:
-        async with httpx.AsyncClient(timeout=20) as client:
+        async with httpx.AsyncClient(timeout=20, headers=headers) as client:
             resp = await client.get(base_url, params=params)
             if resp.status_code != 200 or not resp.headers.get("Content-Type", "").startswith("image/"):
                 raise HTTPException(status_code=502, detail=f"GIBS error: {resp.status_code}")
@@ -372,3 +406,49 @@ async def get_gibs_snapshot(
         raise
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to fetch GIBS image: {e}")
+
+@router.get("/satellite/image-url")
+async def get_satellite_image_url(
+    layer: str = Query(default="MODIS_Terra_NDVI_16Day", description="GIBS layer name"),
+    year: int = Query(default=2020, ge=settings.DATA_YEAR_MIN, le=settings.DATA_YEAR_MAX),
+    month: int = Query(default=6, ge=1, le=12),
+    day: int = Query(default=15, ge=1, le=31),
+    width: int = Query(default=600, ge=64, le=2000),
+    height: int = Query(default=400, ge=64, le=2000),
+    bbox: str = Query(default="26,80,30.5,88.5", description="minLat,minLon,maxLat,maxLon")
+):
+    """Get a direct URL to satellite imagery (for frontend use)"""
+    from app.services.nasa_api import nasa_client
+    
+    try:
+        parts = [float(x) for x in bbox.split(",")]
+        if len(parts) != 4:
+            raise ValueError
+        bbox_tuple = (parts[0], parts[1], parts[2], parts[3])
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid bbox format")
+    
+    try:
+        url = await nasa_client.get_satellite_image_url(
+            layer=layer,
+            year=year,
+            month=month,
+            day=day,
+            bbox=bbox_tuple,
+            width=width,
+            height=height
+        )
+        return {"url": url, "layer": layer, "date": f"{year}-{month:02d}-{day:02d}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate image URL: {e}")
+
+@router.get("/satellite/layers")
+async def get_available_satellite_layers():
+    """Get list of available satellite imagery layers"""
+    from app.services.nasa_api import nasa_client
+    
+    try:
+        layers = await nasa_client.get_available_layers()
+        return {"layers": layers, "total": len(layers)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get layers: {e}")

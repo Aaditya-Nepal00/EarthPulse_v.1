@@ -3,14 +3,14 @@
  * Handles communication with backend FastAPI services
  */
 
-// Environment variables with safe fallback to current host:8000
+// Environment variables with safe fallback
+// Use relative path by default to leverage Vite proxy in development
 const API_BASE_URL = ((): string => {
   const envUrl = (import.meta as any)?.env?.VITE_API_BASE_URL
   if (envUrl && typeof envUrl === 'string') return envUrl
-  if (typeof window !== 'undefined') {
-    return `${window.location.protocol}//${window.location.hostname}:8000`
-  }
-  return 'http://localhost:8000'
+  // Default to empty string to use relative paths (e.g. /api/v1/...)
+  // This allows the Vite proxy to handle the request to the backend
+  return ''
 })()
 const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1'
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000')
@@ -71,6 +71,50 @@ export interface TemperatureData {
   trend: string
 }
 
+export interface GLOFData {
+  year: number
+  region: string
+  risk_level: string
+  lake_area_km2: number
+  expansion_rate: number
+  data_points: EnvironmentalDataPoint[]
+  source: string
+  trend: string
+}
+
+export interface ForestData {
+  year: number
+  region: string
+  forest_cover_km2: number
+  deforestation_rate: number
+  community_forest_area: number
+  data_points: EnvironmentalDataPoint[]
+  source: string
+  trend: string
+}
+
+export interface LandslideData {
+  year: number
+  region: string
+  risk_index: number
+  high_risk_area_km2: number
+  rainfall_correlation: number
+  data_points: EnvironmentalDataPoint[]
+  source: string
+  trend: string
+}
+
+export interface EarthquakeData {
+  year: number
+  region: string
+  recovery_percentage: number
+  scar_visibility_index: number
+  vegetation_regrowth: number
+  data_points: EnvironmentalDataPoint[]
+  source: string
+  trend: string
+}
+
 export interface EnvironmentalSummary {
   year: number
   region: string
@@ -78,6 +122,10 @@ export interface EnvironmentalSummary {
   glacier_data?: GlacierData
   urban_data?: UrbanData
   temperature_data?: TemperatureData
+  glof_data?: GLOFData
+  forest_data?: ForestData
+  landslide_data?: LandslideData
+  earthquake_data?: EarthquakeData
 }
 
 export interface ComparisonResult {
@@ -134,7 +182,7 @@ class EOApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`
-    
+
     const defaultOptions: RequestInit = {
       method: 'GET',
       headers: {
@@ -154,7 +202,7 @@ class EOApiClient {
 
     try {
       const response = await fetch(url, config)
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -191,6 +239,30 @@ class EOApiClient {
     )
   }
 
+  async getGLOFData(year: number, region: string = 'nepal_himalayas'): Promise<GLOFData> {
+    return this.request<GLOFData>(
+      `/environmental/glof/${year}?region=${region}`
+    )
+  }
+
+  async getForestData(year: number, region: string = 'nepal_himalayas'): Promise<ForestData> {
+    return this.request<ForestData>(
+      `/environmental/forest/${year}?region=${region}`
+    )
+  }
+
+  async getLandslideData(year: number, region: string = 'nepal_himalayas'): Promise<LandslideData> {
+    return this.request<LandslideData>(
+      `/environmental/landslide/${year}?region=${region}`
+    )
+  }
+
+  async getEarthquakeData(year: number, region: string = 'nepal_himalayas'): Promise<EarthquakeData> {
+    return this.request<EarthquakeData>(
+      `/environmental/earthquake/${year}?region=${region}`
+    )
+  }
+
   async getEnvironmentalSummary(year: number, region: string = 'nepal_himalayas'): Promise<EnvironmentalSummary> {
     return this.request<EnvironmentalSummary>(
       `/environmental/summary?year=${year}&region=${region}`
@@ -211,7 +283,7 @@ class EOApiClient {
       end_year: endYear.toString(),
       include_intermediate: includeIntermediate.toString()
     })
-    
+
     return this.request<ComparisonResult[]>(
       `/environmental/compare/temporal?${params}`
     )
@@ -296,13 +368,13 @@ class DataCache {
   get(key: string): any | null {
     const expiry = this.ttl.get(key)
     if (!expiry) return null
-    
+
     if (Date.now() > expiry) {
       this.cache.delete(key)
       this.ttl.delete(key)
       return null
     }
-    
+
     return this.cache.get(key) || null
   }
 
@@ -331,11 +403,11 @@ export class EOApiService {
   async getNDVIData(year: number, region: string = 'nepal_himalayas'): Promise<NDVIData> {
     const cacheKey = `ndvi_${year}_${region}`
     const cachedData = this.cache.get(cacheKey)
-    
+
     if (cachedData) {
       return cachedData
     }
-    
+
     const data = await this.client.getNDVIData(year, region)
     this.cache.set(cacheKey, data)
     return data
@@ -344,11 +416,11 @@ export class EOApiService {
   async getGlacierData(year: number, region: string = 'nepal_himalayas'): Promise<GlacierData> {
     const cacheKey = `glacier_${year}_${region}`
     const cachedData = this.cache.get(cacheKey)
-    
+
     if (cachedData) {
       return cachedData
     }
-    
+
     const data = await this.client.getGlacierData(year, region)
     this.cache.set(cacheKey, data)
     return data
@@ -357,11 +429,11 @@ export class EOApiService {
   async getUrbanData(year: number, region: string = 'nepal_himalayas'): Promise<UrbanData> {
     const cacheKey = `urban_${year}_${region}`
     const cachedData = this.cache.get(cacheKey)
-    
+
     if (cachedData) {
       return cachedData
     }
-    
+
     const data = await this.client.getUrbanData(year, region)
     this.cache.set(cacheKey, data)
     return data
@@ -370,12 +442,64 @@ export class EOApiService {
   async getTemperatureData(year: number, region: string = 'nepal_himalayas'): Promise<TemperatureData> {
     const cacheKey = `temperature_${year}_${region}`
     const cachedData = this.cache.get(cacheKey)
-    
+
     if (cachedData) {
       return cachedData
     }
-    
+
     const data = await this.client.getTemperatureData(year, region)
+    this.cache.set(cacheKey, data)
+    return data
+  }
+
+  async getGLOFData(year: number, region: string = 'nepal_himalayas'): Promise<GLOFData> {
+    const cacheKey = `glof_${year}_${region}`
+    const cachedData = this.cache.get(cacheKey)
+
+    if (cachedData) {
+      return cachedData
+    }
+
+    const data = await this.client.getGLOFData(year, region)
+    this.cache.set(cacheKey, data)
+    return data
+  }
+
+  async getForestData(year: number, region: string = 'nepal_himalayas'): Promise<ForestData> {
+    const cacheKey = `forest_${year}_${region}`
+    const cachedData = this.cache.get(cacheKey)
+
+    if (cachedData) {
+      return cachedData
+    }
+
+    const data = await this.client.getForestData(year, region)
+    this.cache.set(cacheKey, data)
+    return data
+  }
+
+  async getLandslideData(year: number, region: string = 'nepal_himalayas'): Promise<LandslideData> {
+    const cacheKey = `landslide_${year}_${region}`
+    const cachedData = this.cache.get(cacheKey)
+
+    if (cachedData) {
+      return cachedData
+    }
+
+    const data = await this.client.getLandslideData(year, region)
+    this.cache.set(cacheKey, data)
+    return data
+  }
+
+  async getEarthquakeData(year: number, region: string = 'nepal_himalayas'): Promise<EarthquakeData> {
+    const cacheKey = `earthquake_${year}_${region}`
+    const cachedData = this.cache.get(cacheKey)
+
+    if (cachedData) {
+      return cachedData
+    }
+
+    const data = await this.client.getEarthquakeData(year, region)
     this.cache.set(cacheKey, data)
     return data
   }
@@ -383,14 +507,24 @@ export class EOApiService {
   async getEnvironmentalSummary(year: number, region: string = 'nepal_himalayas'): Promise<EnvironmentalSummary> {
     const cacheKey = `summary_${year}_${region}`
     const cachedData = this.cache.get(cacheKey)
-    
+
     if (cachedData) {
       return cachedData
     }
-    
+
     const data = await this.client.getEnvironmentalSummary(year, region)
     this.cache.set(cacheKey, data)
     return data
+  }
+
+  async getTemporalComparison(
+    indicator: string,
+    region: string = 'nepal_himalayas',
+    startYear: number = 2000,
+    endYear: number = 2025,
+    includeIntermediate: boolean = false
+  ): Promise<ComparisonResult[]> {
+    return this.client.getTemporalComparison(indicator, region, startYear, endYear, includeIntermediate)
   }
 
   // Non-cached methods for dynamic data

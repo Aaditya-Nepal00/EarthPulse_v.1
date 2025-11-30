@@ -7,126 +7,76 @@ export default {
   theme: {
     extend: {
       colors: {
-        'space-dark': '#0a0a0a',
-        'space-darker': '#050505',
-        'space-blue': '#1e3a8a',
-        'space-purple': '#7c3aed',
-        'earth-green': '#10b981',
-        'earth-deep': '#065f46',
-        'glacier-blue': '#0ea5e9',
-        'glacier-deep': '#0369a1',
-        'urban-orange': '#f59e0b',
-        'urban-deep': '#d97706',
-        'temperature-red': '#ef4444',
-        'temperature-deep': '#dc2626',
-        'nasa-gold': '#fbbf24',
-        'cosmic-purple': '#a855f7',
-        'nebula-blue': '#3b82f6',
-        'aurora-green': '#34d399'
+        // Space Theme Colors
+        'space': {
+          50: '#e0e7ff',
+          100: '#c7d2fe',
+          200: '#a5b4fc',
+          300: '#818cf8',
+          400: '#6366f1',
+          500: '#4f46e5',
+          600: '#4338ca',
+          700: '#3730a3',
+          800: '#312e81',
+          900: '#1e1b4b',
+          950: '#0a0a0f',
+        },
+        'cosmic-blue': '#3b82f6',
+        'cosmic-purple': '#8b5cf6',
+        'cosmic-pink': '#ec4899',
+        'nebula-blue': '#60a5fa',
+        'nebula-purple': '#a78bfa',
+        'nebula-pink': '#f472b6',
+        'cosmic-gold': '#f59e0b',
+        'nebula-gold': '#fcd34d',
       },
-      fontFamily: {
-        'nasa': ['Orbitron', 'monospace'],
-        'sans': ['Inter', 'sans-serif'],
-        'code': ['Fira Code', 'monospace']
+      backgroundImage: {
+        'space-gradient': 'linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%)',
+        'cosmic-gradient': 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)',
+        'nebula-gradient': 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 50%, rgba(236, 72, 153, 0.1) 100%)',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',
-        'float-delayed': 'float 6s ease-in-out infinite 2s',
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'pulse-glow': 'pulse-glow 4s ease-in-out infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-        'spin-slow': 'spin 3s linear infinite',
-        'bounce-slow': 'bounce 3s infinite',
-        'ping-slow': 'ping 4s cubic-bezier(0, 0, 0.2, 1) infinite',
-        'wiggle': 'wiggle 1s ease-in-out infinite',
-        'heartbeat': 'heartbeat 2s ease-in-out infinite',
-        'orbit': 'orbit 20s linear infinite',
-        'earth-spin': 'earth-spin 30s linear infinite',
-        'satellite-orbit': 'satellite-orbit 15s linear infinite'
+        'glow': 'glow 3s ease-in-out infinite',
+        'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'shimmer': 'shimmer 2s linear infinite',
+        'nebula': 'nebula 15s ease infinite',
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-20px)' }
-        },
-        'pulse-glow': {
-          '0%, 100%': { 
-            opacity: '0.3',
-            transform: 'scale(1)'
-          },
-          '50%': { 
-            opacity: '0.6',
-            transform: 'scale(1.2)'
-          }
+          '50%': { transform: 'translateY(-20px)' },
         },
         glow: {
-          '0%': { 
-            boxShadow: '0 0 5px #0ea5e9, 0 0 10px #0ea5e9, 0 0 15px #0ea5e9',
-            textShadow: '0 0 5px #0ea5e9, 0 0 10px #0ea5e9, 0 0 15px #0ea5e9'
+          '0%, 100%': {
+            boxShadow: '0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.3)',
           },
-          '100%': { 
-            boxShadow: '0 0 10px #0ea5e9, 0 0 20px #0ea5e9, 0 0 30px #0ea5e9',
-            textShadow: '0 0 10px #0ea5e9, 0 0 20px #0ea5e9, 0 0 30px #0ea5e9'
-          }
-        },
-        wiggle: {
-          '0%, 100%': { transform: 'rotate(-3deg)' },
-          '50%': { transform: 'rotate(3deg)' }
-        },
-        heartbeat: {
-          '0%, 100%': { transform: 'scale(1)' },
-          '25%': { transform: 'scale(1.1)' },
-          '50%': { transform: 'scale(1)' },
-          '75%': { transform: 'scale(1.05)' }
-        },
-        orbit: {
-          '0%': { transform: 'rotate(0deg) translateX(100px) rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg) translateX(100px) rotate(-360deg)' }
-        },
-        'earth-spin': {
-          '0%': { transform: 'rotateY(0deg)' },
-          '100%': { transform: 'rotateY(360deg)' }
-        },
-        'satellite-orbit': {
-          '0%': { 
-            transform: 'rotate(0deg) translateX(200px) rotate(0deg)',
-            opacity: '0.8'
+          '50%': {
+            boxShadow: '0 0 30px rgba(59, 130, 246, 0.8), 0 0 60px rgba(59, 130, 246, 0.5)',
           },
+        },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '0.6' },
           '50%': { opacity: '1' },
-          '100%': { 
-            transform: 'rotate(360deg) translateX(200px) rotate(-360deg)',
-            opacity: '0.8'
-          }
-        }
-      },
-      backgroundImage: {
-        'space-gradient': 'linear-gradient(135deg, #0a0a0a 0%, #1e1b2c 35%, #2d1b69 100%)',
-        'earth-gradient': 'linear-gradient(45deg, #0ea5e9 0%, #10b981 50%, #f59e0b 100%)',
-        'aurora-gradient': 'linear-gradient(45deg, #06b6d4 0%, #8b5cf6 50%, #ec4899 100%)',
-        'cosmic-gradient': 'linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #db2777 100%)',
-        'stars': 'radial-gradient(2px 2px at 20px 30px, #eee, transparent), radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent)'
-      },
-      backdropBlur: {
-        'xs': '2px',
-        'sm': '4px',
-        'md': '8px',
-        'lg': '12px',
-        'xl': '16px',
-        '2xl': '24px',
-        '3xl': '32px'
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-1000px 0' },
+          '100%': { backgroundPosition: '1000px 0' },
+        },
+        nebula: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
       },
       boxShadow: {
-        'space': '0 25px 50px -12px rgba(0, 0, 0, 0.8)',
-        'cosmic': '0 0 30px rgba(14, 165, 233, 0.3)',
-        'earth': '0 0 25px rgba(16, 185, 129, 0.4)',
-        'aurora': '0 0 35px rgba(167, 85, 247, 0.5)',
-        'glow': '0 0 20px rgba(255, 255, 255, 0.1)',
-        'inner-glow': 'inset 0 0 20px rgba(14, 165, 233, 0.2)'
+        'cosmic': '0 8px 32px rgba(59, 130, 246, 0.3)',
+        'cosmic-lg': '0 12px 48px rgba(59, 130, 246, 0.4)',
+        'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
+        'glow-lg': '0 0 40px rgba(59, 130, 246, 0.6)',
       },
-      borderRadius: {
-        'space': '16px',
-        'cosmic': '20px'
-      }
+      backdropBlur: {
+        'cosmic': '20px',
+      },
     },
   },
   plugins: [],

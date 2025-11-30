@@ -40,10 +40,18 @@ async def initialize_services():
     """Initialize external services and connections"""
     try:
         # Initialize NASA API connections
-        from app.services.nasa_api import NASAEOClient
-        nasa_client = NASAEOClient()
+        from app.services.nasa_api import nasa_client
         await nasa_client.initialize()
-        logger.info("✅ NASA API Client initialized")
+        
+        if nasa_client.is_initialized:
+            logger.info("✅ NASA Environmental Data API initialized")
+        else:
+            logger.info("ℹ️ NASA Environmental Data API not configured, using simulation")
+        
+        if nasa_client.imagery_initialized:
+            logger.info("✅ NASA Satellite Imagery API initialized")
+        else:
+            logger.info("ℹ️ NASA Satellite Imagery API not configured, using placeholders")
         
         # Initialize map services
         from app.services.map_service import MapService

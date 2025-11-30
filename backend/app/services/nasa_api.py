@@ -1,13 +1,16 @@
 """
 NASA Earth Observation API Integration Service
 Provides integration with real NASA Earth Observation APIs when configured
+Supports two API keys: one for environmental data, one for satellite imagery
 """
 
 import httpx
 import asyncio
-from typing import Dict, List, Optional, Any
+import base64
+from typing import Dict, List, Optional, Any, Tuple
 from app.config.settings import settings
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -15,17 +18,22 @@ class NASAEOClient:
     """NASA Earth Observation API Client"""
     
     def __init__(self):
-        self.api_key = settings.NASA_API_KEY
+        self.api_key = settings.NASA_API_KEY  # For environmental data
+        self.imagery_api_key = settings.NASA_IMAGERY_API_KEY  # For satellite imagery
         self.base_url = settings.NASA_EO_BASE_URL
+        self.gibs_base_url = settings.NASA_GIBS_BASE_URL
+        self.cmr_base_url = settings.NASA_CMR_BASE_URL
         self.client = None
+        self.imagery_client = None
         self.is_initialized = False
+        self.imagery_initialized = False
     
     async def initialize(self):
-        """Initialize NASA API client with real Earthdata token"""
+        """Initialize NASA API clients with real API keys"""
+        # Initialize environmental data client
         try:
             if not self.api_key or self.api_key.strip() == "your_nasa_api_key_here":
-                logger.info("NASA API key not configured, using mock data")
-                # Still create a client for unauthenticated endpoints like CMR public search
+                logger.info("NASA environmental data API key not configured, using mock data")
                 self.client = httpx.AsyncClient(
                     timeout=30.0,
                     headers={
@@ -34,29 +42,76 @@ class NASAEOClient:
                     }
                 )
                 self.is_initialized = False
-                return
-
-            # Initialize with NASA Earthdata Bearer Token
-            self.client = httpx.AsyncClient(
-                timeout=30.0,
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
+            else:
+                # Initialize with NASA Earthdata Bearer Token or API key
+                headers = {
                     "Content-Type": "application/json",
                     "User-Agent": "Earth-Observation-Visualizer/1.0"
                 }
-            )
-            
-            # Test connection to NASA Earthdata CMR (Common Metadata Repository)
-            test_url = "https://cmr.earthdata.nasa.gov/search/collections"
-            response = await self.client.get(test_url, params={"page_size": 1})
-            response.raise_for_status()
-            self.is_initialized = True
-            logger.info("✅ NASA Earthdata API initialized successfully with real token")
-            logger.info("🛰️ Connected to NASA Earth Observation data services")
+                
+                # Try Bearer token first, fallback to API key in query params
+                if self.api_key.startswith("Bearer ") or len(self.api_key) > 50:
+                    headers["Authorization"] = f"Bearer {self.api_key.replace('Bearer ', '')}"
+                
+                self.client = httpx.AsyncClient(timeout=30.0, headers=headers)
+                
+                # Test connection to NASA Earthdata CMR
+                test_url = f"{self.cmr_base_url}/search/collections"
+                response = await self.client.get(test_url, params={"page_size": 1})
+                response.raise_for_status()
+                self.is_initialized = True
+                logger.info("✅ NASA Earthdata API initialized successfully")
         except Exception as e:
             logger.error(f"Failed to initialize NASA Earthdata API: {e}")
-            # keep client but mark not initialized
             self.is_initialized = False
+        
+        # Initialize satellite imagery client
+        try:
+            if not self.imagery_api_key or self.imagery_api_key.strip() == "your_nasa_imagery_api_key_here":
+                logger.info("NASA imagery API key not configured, using placeholder images")
+                self.imagery_client = httpx.AsyncClient(
+                    timeout=30.0,
+                    headers={
+                        "User-Agent": "Earth-Observation-Visualizer/1.0"
+                    }
+                )
+                self.imagery_initialized = False
+            else:
+                # Initialize imagery client with Bearer token authentication
+                headers = {
+                    "User-Agent": "Earth-Observation-Visualizer/1.0"
+                }
+                
+                # Add Bearer token if it's a JWT token (longer than 50 chars)
+                if len(self.imagery_api_key) > 50:
+                    headers["Authorization"] = f"Bearer {self.imagery_api_key}"
+                
+                self.imagery_client = httpx.AsyncClient(
+                    timeout=30.0,
+                    headers=headers
+                )
+                
+                # Test GIBS connection
+                test_url = f"{self.gibs_base_url}/wms/epsg4326/best/wms.cgi"
+                params = {
+                    "service": "WMS",
+                    "version": "1.3.0",
+                    "request": "GetCapabilities"
+                }
+                # Also add token as query param for compatibility
+                if self.imagery_api_key != "your_nasa_imagery_api_key_here" and len(self.imagery_api_key) <= 50:
+                    params["token"] = self.imagery_api_key
+                
+                response = await self.imagery_client.get(test_url, params=params)
+                if response.status_code == 200:
+                    self.imagery_initialized = True
+                    logger.info("✅ NASA GIBS imagery API initialized successfully")
+                else:
+                    logger.warning("GIBS test failed, but continuing with public access")
+                    self.imagery_initialized = True  # GIBS has public endpoints
+        except Exception as e:
+            logger.warning(f"GIBS initialization note: {e} - continuing with public access")
+            self.imagery_initialized = True  # GIBS is often publicly accessible
     
     async def fetch_modis_ndvi(self, region: str, year: int) -> Optional[Dict]:
         """Fetch MODIS NDVI data from NASA CMR"""
@@ -191,31 +246,219 @@ class NASAEOClient:
         except Exception as e:
             logger.error(f"Failed to fetch Sentinel glacier data: {e}")
             return None
+
+    async def fetch_sentinel_glof(self, region: str, year: int) -> Optional[Dict]:
+        """Fetch GLOF risk data from NASA Sentinel"""
+        if not self.is_initialized or not self.client:
+            return None
+        try:
+            # Placeholder for real API call
+            # In a real scenario, this would query a specific GLOF dataset
+            return None 
+        except Exception as e:
+            logger.error(f"Failed to fetch GLOF data: {e}")
+            return None
+
+    async def fetch_landsat_forest(self, region: str, year: int) -> Optional[Dict]:
+        """Fetch Forest cover data from NASA Landsat"""
+        if not self.is_initialized or not self.client:
+            return None
+        try:
+            # Placeholder for real API call
+            return None
+        except Exception as e:
+            logger.error(f"Failed to fetch Forest data: {e}")
+            return None
+
+    async def fetch_landslide_risk(self, region: str, year: int) -> Optional[Dict]:
+        """Fetch Landslide susceptibility data"""
+        if not self.is_initialized or not self.client:
+            return None
+        try:
+            # Placeholder for real API call
+            return None
+        except Exception as e:
+            logger.error(f"Failed to fetch Landslide data: {e}")
+            return None
+
+    async def fetch_earthquake_recovery(self, region: str, year: int) -> Optional[Dict]:
+        """Fetch Post-Earthquake recovery data"""
+        if not self.is_initialized or not self.client:
+            return None
+        try:
+            # Placeholder for real API call
+            return None
+        except Exception as e:
+            logger.error(f"Failed to fetch Earthquake recovery data: {e}")
+            return None
+    
+    async def get_satellite_image(
+        self,
+        layer: str = "MODIS_Terra_NDVI_16Day",
+        year: int = 2020,
+        month: int = 6,
+        day: int = 15,
+        bbox: Tuple[float, float, float, float] = (26.0, 80.0, 30.5, 88.5),  # Nepal bounds
+        width: int = 600,
+        height: int = 400
+    ) -> Optional[bytes]:
+        """
+        Fetch real satellite imagery from NASA GIBS
+        
+        Args:
+            layer: GIBS layer name (e.g., MODIS_Terra_NDVI_16Day, MODIS_Terra_CorrectedReflectance_TrueColor)
+            year: Year of the image
+            month: Month (1-12)
+            day: Day of month
+            bbox: Bounding box as (min_lat, min_lon, max_lat, max_lon)
+            width: Image width in pixels
+            height: Image height in pixels
+        
+        Returns:
+            Image bytes (PNG) or None if failed
+        """
+        if not self.imagery_client:
+            logger.warning("Imagery client not available")
+            return None
+        
+        try:
+            date_str = f"{year:04d}-{month:02d}-{day:02d}"
+            min_lat, min_lon, max_lat, max_lon = bbox
+            
+            # GIBS WMS GetMap request
+            gibs_url = f"{self.gibs_base_url}/wms/epsg4326/best/wms.cgi"
+            params = {
+                "service": "WMS",
+                "version": "1.3.0",
+                "request": "GetMap",
+                "layers": layer,
+                "styles": "",
+                "format": "image/png",
+                "transparent": "true",
+                "width": str(width),
+                "height": str(height),
+                "crs": "EPSG:4326",
+                "bbox": f"{min_lat},{min_lon},{max_lat},{max_lon}",
+                "time": date_str
+            }
+            
+            # Add API key as query param if it's short (legacy format)
+            # Bearer token is already in headers from client initialization
+            if self.imagery_api_key and self.imagery_api_key != "your_nasa_imagery_api_key_here" and len(self.imagery_api_key) <= 50:
+                params["token"] = self.imagery_api_key
+            
+            response = await self.imagery_client.get(gibs_url, params=params)
+            response.raise_for_status()
+            
+            if response.headers.get("Content-Type", "").startswith("image/"):
+                logger.info(f"✅ Successfully fetched satellite image for {layer} on {date_str}")
+                return response.content
+            else:
+                logger.warning(f"Unexpected content type: {response.headers.get('Content-Type')}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to fetch satellite image: {e}")
+            return None
+    
+    async def get_satellite_image_url(
+        self,
+        layer: str = "MODIS_Terra_NDVI_16Day",
+        year: int = 2020,
+        month: int = 6,
+        day: int = 15,
+        bbox: Tuple[float, float, float, float] = (26.0, 80.0, 30.5, 88.5),
+        width: int = 600,
+        height: int = 400
+    ) -> Optional[str]:
+        """
+        Get a URL for satellite imagery (for direct use in frontend)
+        """
+        date_str = f"{year:04d}-{month:02d}-{day:02d}"
+        min_lat, min_lon, max_lat, max_lon = bbox
+        
+        params = {
+            "service": "WMS",
+            "version": "1.3.0",
+            "request": "GetMap",
+            "layers": layer,
+            "styles": "",
+            "format": "image/png",
+            "transparent": "true",
+            "width": str(width),
+            "height": str(height),
+            "crs": "EPSG:4326",
+            "bbox": f"{min_lat},{min_lon},{max_lat},{max_lon}",
+            "time": date_str
+        }
+        
+        # For URL generation, add token as query param if it's short
+        # For Bearer tokens, frontend will need to add Authorization header
+        if self.imagery_api_key and self.imagery_api_key != "your_nasa_imagery_api_key_here":
+            if len(self.imagery_api_key) <= 50:
+                params["token"] = self.imagery_api_key
+            else:
+                # For Bearer tokens, add as query param for URL compatibility
+                # Note: Frontend should use Authorization header for better security
+                params["token"] = self.imagery_api_key
+        
+        query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+        return f"{self.gibs_base_url}/wms/epsg4326/best/wms.cgi?{query_string}"
+    
+    async def get_available_layers(self) -> List[Dict[str, str]]:
+        """Get list of available GIBS layers"""
+        common_layers = [
+            {
+                "id": "MODIS_Terra_NDVI_16Day",
+                "name": "MODIS Terra NDVI (16 Day)",
+                "description": "Vegetation Index"
+            },
+            {
+                "id": "MODIS_Terra_CorrectedReflectance_TrueColor",
+                "name": "MODIS Terra True Color",
+                "description": "True color satellite imagery"
+            },
+            {
+                "id": "MODIS_Terra_Land_Surface_Temp_Day",
+                "name": "MODIS Terra Land Surface Temperature",
+                "description": "Daytime land surface temperature"
+            },
+            {
+                "id": "VIIRS_SNPP_CorrectedReflectance_TrueColor",
+                "name": "VIIRS True Color",
+                "description": "High resolution true color imagery"
+            }
+        ]
+        return common_layers
     
     async def get_api_status(self) -> Dict[str, Any]:
         """Get NASA API status and configuration"""
         
-        if not self.is_initialized:
-            return {
-                "# status": "not_initialized",
+        status = {
+            "environmental_data": {
+                "status": "initialized" if self.is_initialized else "not_initialized",
                 "api_key_configured": self.api_key != "your_nasa_api_key_here",
                 "base_url": self.base_url,
-                "client_initialized": self.client is not None,
-                "error": "NASA API not initialized"
-            }
-        
-        return {
-            "status": "initialized",
-            "api_key_configured": self.api_key != "your_nasa_api_key_here",
-            "base_url": self.base_url,
-            "client_initialized": self.client is not None,
+                "cmr_url": self.cmr_base_url,
+                "client_initialized": self.client is not None
+            },
+            "satellite_imagery": {
+                "status": "initialized" if self.imagery_initialized else "not_initialized",
+                "api_key_configured": self.imagery_api_key != "your_nasa_imagery_api_key_here",
+                "gibs_url": self.gibs_base_url,
+                "client_initialized": self.imagery_client is not None
+            },
             "endpoints_available": [
                 "modis/ndvi",
                 "landsat/urban", 
                 "modis/lst",
-                "sentinel/glacier"
+                "sentinel/glacier",
+                "satellite/image",
+                "satellite/image_url"
             ]
         }
+        
+        return status
     
     def _process_modis_granules(self, granules: dict, region: str, year: int) -> List[Dict]:
         """Process MODIS granules and extract NDVI data points"""
@@ -262,11 +505,16 @@ class NASAEOClient:
             return []
 
     async def close(self):
-        """Close NASA API client"""
+        """Close NASA API clients"""
         if self.client:
             await self.client.aclose()
             self.client = None
             self.is_initialized = False
+        
+        if self.imagery_client:
+            await self.imagery_client.aclose()
+            self.imagery_client = None
+            self.imagery_initialized = False
 
 # Global NASA client instance
 nasa_client = NASAEOClient()

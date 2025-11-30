@@ -1,263 +1,271 @@
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { 
-  FaExchangeAlt, 
-  FaPlay, 
-  FaDownload,
-  FaChartBar,
-  FaMapMarkerAlt
+import {
+  FaExchangeAlt,
+  FaMapMarkerAlt,
+  FaChartLine
 } from 'react-icons/fa'
-import { apiService, ComparisonResult, NDVIData } from '../services/api'
+import { apiService } from '../services/api'
 
 interface ComparisonToolProps {
   currentYear: number
 }
 
 const ComparisonTool: React.FC<ComparisonToolProps> = ({ currentYear }) => {
-  const [comparisonYear, setComparisonYear] = useState(2000)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [selectedRegion, setSelectedRegion] = useState('kathmandu')
-  const [results, setResults] = useState<ComparisonResult[] | null>(null)
+  const [comparisonYear, setComparisonYear] = useState(2010)
+  const [selectedRegion, setSelectedRegion] = useState('nepal_himalayas')
+  const [results, setResults] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const regions = [
-    {
-      id: 'kathmandu',
-      name: 'Kathmandu Valley',
-      coordinates: [27.7172, 85.3240],
-      description: 'Urban expansion and development'
-    },
-    {
-      id: 'annapurna',
-      name: 'Annapurna Region',
-      coordinates: [28.3949, 84.1240],
-      description: 'Glacier retreat and mountain changes'
-    },
-    {
-      id: 'everest',
-      name: 'Everest Region',
-      coordinates: [27.9881, 86.9250],
-      description: 'High-altitude environmental changes'
-    }
+    { id: 'nepal_himalayas', name: 'Nepal Himalayas', description: 'Mountain region' },
+    { id: 'kathmandu_valley', name: 'Kathmandu Valley', description: 'Urban area' },
+    { id: 'annapurna_region', name: 'Annapurna Region', description: 'Conservation area' }
   ]
 
-  // map UI region ids to backend region ids
-  const regionIdMap: Record<string, string> = {
-    kathmandu: 'kathmandu_valley',
-    annapurna: 'annapurna_region',
-    everest: 'everest_region'
-  }
-
-  // fetch comparison from backend (NDVI by default)
   useEffect(() => {
-    const fetchComparison = async () => {
-      setLoading(true)
-      setError(null)
+    fetchComparison()
+  }, [comparisonYear, currentYear, selectedRegion])
+
+  const fetchComparison = async () => {
+    if (comparisonYear >= currentYear) {
+      setResults(null)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Try primary API first
       try {
-        const regionParam = regionIdMap[selectedRegion] || 'nepal_himalayas'
         const data = await apiService.getTemporalComparison(
           'ndvi',
-          regionParam,
+          selectedRegion,
           comparisonYear,
           currentYear,
           false
         )
-        setResults(data)
-      } catch (e) {
-        // Fallback: compute comparison on the client using two NDVI calls
-        try {
-          const regionParam = regionIdMap[selectedRegion] || 'nepal_himalayas'
-          const baseline: NDVIData = await apiService.getNDVIData(comparisonYear, regionParam)
-          const latest: NDVIData = await apiService.getNDVIData(currentYear, regionParam)
-          const changeAmount = latest.average_ndvi - baseline.average_ndvi
-          const changePct = baseline.average_ndvi !== 0 ? (changeAmount / baseline.average_ndvi) * 100 : 0
-          const fallback: ComparisonResult = {
-            comparison_type: 'temporal',
-            region: regionParam,
-            indicator: 'ndvi',
-            baseline_year: comparisonYear,
-            comparison_year: currentYear,
-            baseline_value: Number(baseline.average_ndvi.toFixed(3)),
-            comparison_value: Number(latest.average_ndvi.toFixed(3)),
-            change_amount: Number(changeAmount.toFixed(3)),
-            change_percentage: Number(changePct.toFixed(2)),
-            trend_summary: `Vegetation health changed over ${currentYear - comparisonYear} years`,
-            impact_assessment: 'Computed on client due to API fallback'
-          }
-          setResults([fallback])
-        } catch (e2) {
-          setError('Failed to load comparison')
-          setResults(null)
+        if (data && data.length > 0) {
+          setResults(data[0])
+          setLoading(false)
+          return
         }
-      } finally {
-        setLoading(false)
+      } catch (primaryErr) {
+        console.log('Primary API failed, using fallback')
       }
-    }
-    if (comparisonYear < currentYear) {
-      fetchComparison()
-    } else {
+
+      // Fallback: compute simple comparison
+      const baseline = await apiService.getNDVIData(comparisonYear, selectedRegion as any)
+      const latest = await apiService.getNDVIData(currentYear, selectedRegion as any)
+      
+      const changeAmount = latest.average_ndvi - baseline.average_ndvi
+      const changePct = baseline.average_ndvi !== 0 ? (changeAmount / baseline.average_ndvi) * 100 : 0
+      
+      const comparisonResults = {
+        baseline_year: comparisonYear,
+        comparison_year: currentYear,
+        baseline_value: baseline.average_ndvi,
+        comparison_value: latest.average_ndvi,
+        change_amount: changeAmount,
+        change_percentage: changePct,
+        trend_summary: `Vegetation Index changed by ${changePct > 0 ? '+' : ''}${changePct.toFixed(2)}% over ${currentYear - comparisonYear} years`
+      }
+      
+      console.log('Comparison Results:', comparisonResults)
+      setResults(comparisonResults)
+    } catch (err) {
+      console.error('Comparison error:', err)
+      setError(`Unable to fetch comparison data for ${selectedRegion}. Please try another region.`)
       setResults(null)
+    } finally {
+      setLoading(false)
     }
-  }, [comparisonYear, currentYear, selectedRegion])
-
-  const handleSwapYears = () => {
-    setIsAnimating(true)
-    setTimeout(() => {
-      // swap: set comparison year to an earlier baseline relative to current
-      const baseline = Math.max(2000, Math.min(currentYear - 5, comparisonYear))
-      setComparisonYear(baseline)
-      setIsAnimating(false)
-    }, 500)
   }
-
-  const handleAnimateComparison = () => {
-    setIsAnimating(true)
-    setTimeout(() => setIsAnimating(false), 2000)
-  }
-
-  const currentData = results && results.length > 0 ? results[0] : null
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col bg-black/30 backdrop-blur-xl">
       {/* Header */}
-      <div className="p-4 border-b border-blue-500/20">
-        <h2 className="text-lg font-nasa font-bold text-white mb-2">
-          Then vs Now
+      <div className="p-4 md:p-6 border-b border-blue-500/20">
+        <h2 className="text-lg font-bold text-white mb-1">
+          Temporal Comparison
         </h2>
         <p className="text-sm text-blue-300">
-          Compare environmental changes
+          Compare environmental changes over time
         </p>
       </div>
 
       {/* Region Selector */}
-      <div className="p-4 border-b border-blue-500/20">
-        <h3 className="text-sm font-medium text-white mb-3">Select Region</h3>
+      <div className="p-4 md:p-6 border-b border-blue-500/20">
+        <h3 className="text-sm font-semibold text-white mb-3">Select Region</h3>
         <div className="space-y-2">
           {regions.map((region) => (
-            <motion.button
+            <button
               key={region.id}
               onClick={() => setSelectedRegion(region.id)}
-              className={`w-full text-left p-3 rounded-lg border transition-all duration-300 ${
-                selectedRegion === region.id
+              className={`w-full text-left p-3 rounded-lg border transition-all ${selectedRegion === region.id
                   ? 'border-blue-400/50 bg-blue-600/20'
                   : 'border-gray-600/30 hover:border-blue-400/30'
-              }`}
-              whileHover={{ scale: 1.02 }}
+                }`}
             >
-              <div className="flex items-center space-x-3">
-                <FaMapMarkerAlt className="text-blue-400 w-4 h-4" />
+              <div className="flex items-center gap-3">
+                <FaMapMarkerAlt className={selectedRegion === region.id ? 'text-blue-400' : 'text-gray-400'} />
                 <div>
-                  <div className="text-white text-sm font-medium">
-                    {region.name}
-                  </div>
-                  <div className="text-gray-400 text-xs">
-                    {region.description}
-                  </div>
+                  <div className="text-sm font-medium text-white">{region.name}</div>
+                  <div className="text-xs text-gray-400">{region.description}</div>
                 </div>
               </div>
-            </motion.button>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Year Comparison */}
-      <div className="p-4 border-b border-blue-500/20">
+      <div className="p-4 md:p-6 border-b border-blue-500/20">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-white">Time Comparison</h3>
-          <motion.button
-            onClick={handleSwapYears}
-            className="p-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/30 rounded-lg text-blue-400 transition-all duration-300"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+          <h3 className="text-sm font-semibold text-white">Time Period</h3>
+          <button
+            onClick={() => setComparisonYear(Math.max(2000, comparisonYear - 5))}
+            className="p-2 hover:bg-blue-600/20 rounded-lg transition-colors text-blue-400 hover:text-blue-300"
+            title="Swap Years"
           >
-            <FaExchangeAlt className="w-4 h-4" />
-          </motion.button>
+            <FaExchangeAlt />
+          </button>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <motion.div
-            className="text-center p-3 bg-green-600/20 border border-green-400/30 rounded-lg"
-            animate={isAnimating ? { scale: [1, 1.05, 1] } : {}}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="text-green-400 text-xs font-medium mb-1">THEN</div>
-            <div className="text-2xl font-bold text-white">{comparisonYear}</div>
-          </motion.div>
+          <div className="text-center p-4 bg-green-500/10 border border-green-400/30 rounded-lg">
+            <div className="text-xs font-medium text-green-400 mb-1">BASELINE</div>
+            <div className="text-3xl font-bold text-white">{comparisonYear}</div>
+          </div>
 
-          <motion.div
-            className="text-center p-3 bg-blue-600/20 border border-blue-400/30 rounded-lg"
-            animate={isAnimating ? { scale: [1, 1.05, 1] } : {}}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <div className="text-blue-400 text-xs font-medium mb-1">NOW</div>
-            <div className="text-2xl font-bold text-white">{currentYear}</div>
-          </motion.div>
+          <div className="text-center p-4 bg-blue-500/10 border border-blue-400/30 rounded-lg">
+            <div className="text-xs font-medium text-blue-400 mb-1">CURRENT</div>
+            <div className="text-3xl font-bold text-white">{currentYear}</div>
+          </div>
+        </div>
+
+        {/* Year Slider */}
+        <div className="mt-4">
+          <label className="text-xs text-blue-300 mb-2 block">Baseline Year: {comparisonYear}</label>
+          <input
+            type="range"
+            min={2000}
+            max={currentYear - 1}
+            value={comparisonYear}
+            onChange={(e) => setComparisonYear(parseInt(e.target.value))}
+            className="slider w-full"
+          />
         </div>
       </div>
 
-      {/* Comparison Data */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-sm font-medium text-white mb-4">Change Analysis (NDVI)</h3>
+      {/* Comparison Results */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+        <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+          <FaChartLine className="text-blue-400" />
+          <span>Change Analysis (NDVI)</span>
+        </h3>
 
         {loading && (
-          <div className="text-xs text-gray-400">Loading comparison…</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-blue-400/20 border-t-blue-400 rounded-full animate-spin mx-auto mb-3"></div>
+              <p className="text-xs text-blue-300">Fetching data for {selectedRegion}...</p>
+            </div>
+          </div>
         )}
+
         {error && (
-          <div className="text-xs text-red-400">{error}</div>
+          <div className="p-4 bg-red-500/10 border border-red-400/30 rounded-lg text-red-400 text-sm">
+            ⚠️ {error}
+          </div>
         )}
-        {!loading && !error && currentData && (
-          <div className="space-y-4">
-            <motion.div
-              className="bg-black/30 backdrop-blur-sm border border-gray-600/30 rounded-lg p-4"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-white text-sm font-medium">Vegetation Index</h4>
-                <div className={`text-xs font-medium ${currentData.change_amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {currentData.change_amount >= 0 ? '+' : ''}{currentData.change_percentage}%
+
+        {!loading && results && (
+          <motion.div
+            className="space-y-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {/* Main Comparison Card */}
+            <div className="bg-black/20 border border-blue-500/20 rounded-lg p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-white">Vegetation Index Comparison</h4>
+                <div className={`text-2xl font-bold flex items-center gap-1 ${
+                  results.change_amount >= 0 ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {results.change_amount >= 0 ? '↗' : '↘'} {Math.abs(results.change_percentage?.toFixed(1))}%
                 </div>
               </div>
 
-              <div className="text-xs text-gray-400">
-                {currentData.baseline_year}: {currentData.baseline_value} → {currentData.comparison_year}: {currentData.comparison_value}
+              {/* Data Values */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-black/30 rounded-lg p-3 border border-green-500/20">
+                  <div className="text-xs text-green-400 mb-1">Baseline ({results.baseline_year})</div>
+                  <div className="text-xl font-bold text-white">{results.baseline_value?.toFixed(3)}</div>
+                </div>
+                <div className="bg-black/30 rounded-lg p-3 border border-blue-500/20">
+                  <div className="text-xs text-blue-400 mb-1">Current ({results.comparison_year})</div>
+                  <div className="text-xl font-bold text-white">{results.comparison_value?.toFixed(3)}</div>
+                </div>
               </div>
 
-              <div className="mt-2 h-2 bg-gray-700 rounded-full overflow-hidden">
-                <motion.div
-                  className={`h-full ${currentData.change_amount >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, Math.abs(currentData.change_percentage))}%` }}
-                />
+              {/* Change Details */}
+              <div className="bg-black/30 rounded-lg p-3 border border-yellow-500/20">
+                <div className="text-xs text-yellow-400 mb-1">Absolute Change</div>
+                <div className={`text-lg font-bold ${results.change_amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {results.change_amount >= 0 ? '+' : ''}{results.change_amount?.toFixed(4)}
+                </div>
               </div>
 
-              <div className="mt-2 text-xs text-blue-300">{currentData.trend_summary}</div>
-            </motion.div>
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>Change Magnitude</span>
+                  <span>{Math.abs(results.change_percentage).toFixed(1)}%</span>
+                </div>
+                <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full ${results.change_amount >= 0 ? 'bg-green-500' : 'bg-red-500'}`}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, Math.abs(results.change_percentage))}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                  />
+                </div>
+              </div>
+
+              {/* Summary */}
+              {results.trend_summary && (
+                <div className="p-3 bg-blue-500/10 border border-blue-400/20 rounded text-sm text-blue-300">
+                  📊 {results.trend_summary}
+                </div>
+              )}
+            </div>
+
+            {/* Additional Metrics */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-black/20 border border-blue-500/20 rounded-lg p-3">
+                <div className="text-xs text-gray-400 mb-2">Time Span</div>
+                <div className="text-lg font-bold text-white">{results.comparison_year - results.baseline_year} yrs</div>
+              </div>
+              <div className="bg-black/20 border border-blue-500/20 rounded-lg p-3">
+                <div className="text-xs text-gray-400 mb-2">Annual Change</div>
+                <div className={`text-lg font-bold ${results.change_amount >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  {(results.change_amount / (results.comparison_year - results.baseline_year))?.toFixed(4)}/yr
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {!loading && !error && !results && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="text-3xl mb-2">📊</div>
+            <p className="text-white font-medium mb-1">Ready to Compare</p>
+            <p className="text-xs text-gray-400">Select baseline year {comparisonYear} to view analysis</p>
           </div>
         )}
-      </div>
-
-      {/* Action Buttons */}
-      <div className="p-4 border-t border-blue-500/20 space-y-2">
-        <motion.button
-          onClick={handleAnimateComparison}
-          className="w-full flex items-center justify-center space-x-2 py-2 bg-blue-600/20 hover:bg-blue-600/40 border border-blue-400/30 rounded-lg text-blue-300 transition-all duration-300"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <FaPlay className="w-4 h-4" />
-          <span className="text-sm font-medium">Animate Comparison</span>
-        </motion.button>
-
-        <motion.button
-          className="w-full flex items-center justify-center space-x-2 py-2 bg-green-600/20 hover:bg-green-600/40 border border-green-400/30 rounded-lg text-green-300 transition-all duration-300"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <FaDownload className="w-4 h-4" />
-          <span className="text-sm font-medium">Export Report</span>
-        </motion.button>
       </div>
     </div>
   )

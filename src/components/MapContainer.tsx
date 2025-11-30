@@ -3,6 +3,8 @@ import { MapContainer as LeafletMap, TileLayer, Marker, Popup, useMap } from 're
 import L from 'leaflet'
 import { motion } from 'framer-motion'
 import { apiService, EnvironmentalDataPoint } from '../services/api'
+import MoreInfoModal from './MoreInfoModal'
+import ChartModal from './ChartModal'
 
 // Fix for default markers in React Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -30,7 +32,7 @@ interface MapDataPoint {
 // Custom hook to update map when year changes
 const MapUpdater: React.FC<{ year: number; indicator: string }> = ({ year, indicator }) => {
   const map = useMap()
-  
+
   useEffect(() => {
     console.log(`Updating map for year ${year} with indicator ${indicator}`)
   }, [year, indicator, map])
@@ -44,16 +46,19 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
   const [isLoading, setIsLoading] = useState(false)
   const [mapDataPoints, setMapDataPoints] = useState<MapDataPoint[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [showInfoModal, setShowInfoModal] = useState(false)
+  const [showChartModal, setShowChartModal] = useState(false)
+  const [selectedPoint, setSelectedPoint] = useState<MapDataPoint | null>(null)
 
   // Fetch environmental data when year or indicator changes
   useEffect(() => {
     const fetchEnvironmentalData = async () => {
       setIsLoading(true)
       setError(null)
-      
+
       try {
         let environmentalData
-        
+
         switch (selectedIndicator) {
           case 'ndvi':
             environmentalData = await apiService.getNDVIData(currentYear, 'nepal_himalayas')
@@ -75,11 +80,11 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
 
         // Transform environmental data to map points
         await transformEnvironmentalDataToMapPoints(environmentalData, selectedIndicator)
-        
+
       } catch (err) {
         console.error('Failed to fetch environmental data:', err)
         setError('Failed to load environmental data. Using sample data.')
-        
+
         // Fallback to sample data
         generateSampleMapPoints()
       } finally {
@@ -92,7 +97,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
 
   const transformEnvironmentalDataToMapPoints = async (data: any, indicator: string) => {
     let dataPoints: EnvironmentalDataPoint[] = []
-    
+
     if (indicator === 'ndvi' && data.data_points) {
       dataPoints = data.data_points
     } else if (indicator === 'glacier' && data.data_points) {
@@ -206,15 +211,25 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
         box-shadow: 0 0 10px ${color};
       "></div>`,
       iconSize: [size, size],
-      iconAnchor: [size/2, size/2]
+      iconAnchor: [size / 2, size / 2]
     })
+  }
+
+  const handleViewDetails = (point: MapDataPoint) => {
+    setSelectedPoint(point)
+    setShowInfoModal(true)
+  }
+
+  const handleCompareYears = (point: MapDataPoint) => {
+    setSelectedPoint(point)
+    setShowChartModal(true)
   }
 
   return (
     <div className="relative h-full w-full">
       {/* Error Message */}
       {error && (
-        <motion.div 
+        <motion.div
           className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-red-600/20 backdrop-blur-sm border border-red-400/30 rounded-lg px-4 py-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -227,7 +242,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
 
       {/* Loading Overlay */}
       {isLoading && (
-        <motion.div 
+        <motion.div
           className="absolute inset-0 bg-black/50 backdrop-blur-sm z-20 flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -245,6 +260,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
       <LeafletMap
         center={mapCenter}
         zoom={mapZoom}
+        zoomControl={false}
         style={{ height: '100%', width: '100%' }}
         className="z-10"
       >
@@ -253,10 +269,10 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
-        
+
         {/* Map Updater */}
         <MapUpdater year={currentYear} indicator={selectedIndicator} />
-        
+
         {/* Dynamic Data Points */}
         {mapDataPoints.map((point) => (
           <Marker
@@ -274,10 +290,16 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
                     {point.confidence && ` (Confidence: ${Math.round(point.confidence * 100)}%)`}
                   </div>
                   <div className="flex space-x-2">
-                    <button className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">
+                    <button 
+                      onClick={() => handleViewDetails(point)}
+                      className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                    >
                       View Details
                     </button>
-                    <button className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors">
+                    <button 
+                      onClick={() => handleCompareYears(point)}
+                      className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
+                    >
                       Compare Years
                     </button>
                   </div>
@@ -298,7 +320,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
         >
           🔄
         </motion.button>
-        
+
         <motion.button
           className="p-2 bg-black/50 backdrop-blur-sm border border-green-400/30 rounded-lg text-white hover:bg-green-600/30 transition-all duration-300"
           whileHover={{ scale: 1.05 }}
@@ -310,7 +332,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
       </div>
 
       {/* Enhanced Year Display */}
-      <motion.div 
+      <motion.div
         className="absolute top-4 left-4 z-20 bg-black/50 backdrop-blur-sm border border-blue-400/30 rounded-lg px-4 py-2"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -323,7 +345,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
       </motion.div>
 
       {/* Enhanced Indicator Display */}
-      <motion.div 
+      <motion.div
         className="absolute top-20 left-4 z-20 bg-black/50 backdrop-blur-sm border border-green-400/30 rounded-lg px-4 py-2"
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
@@ -337,7 +359,7 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
       </motion.div>
 
       {/* Data Source Info */}
-      <motion.div 
+      <motion.div
         className="absolute bottom-4 right-4 z-20 bg-black/50 backdrop-blur-sm border border-gray-400/30 rounded-lg px-3 py-2"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -348,6 +370,32 @@ const MapContainer: React.FC<MapContainerProps> = ({ currentYear, selectedIndica
           <div>Real-time: {isLoading ? 'Loading...' : 'Live'}</div>
         </div>
       </motion.div>
+
+      {/* Modals */}
+      {showInfoModal && selectedPoint && (
+        <MoreInfoModal
+          indicator={{
+            id: selectedPoint.type,
+            name: selectedPoint.title,
+            description: selectedPoint.description,
+            details: `${selectedPoint.description}\n\nValue: ${selectedPoint.value.toFixed(2)}`,
+            color: selectedPoint.type === 'ndvi' ? 'green' : selectedPoint.type === 'glacier' ? 'blue' : selectedPoint.type === 'temperature' ? 'red' : 'orange'
+          }}
+          onClose={() => setShowInfoModal(false)}
+        />
+      )}
+
+      {showChartModal && selectedPoint && (
+        <ChartModal
+          indicator={{
+            id: selectedPoint.type,
+            name: selectedPoint.title,
+            color: selectedPoint.type === 'ndvi' ? 'green' : selectedPoint.type === 'glacier' ? 'blue' : selectedPoint.type === 'temperature' ? 'red' : 'orange',
+            unit: selectedPoint.type === 'temperature' ? '°C' : 'Index'
+          }}
+          onClose={() => setShowChartModal(false)}
+        />
+      )}
     </div>
   )
 }
