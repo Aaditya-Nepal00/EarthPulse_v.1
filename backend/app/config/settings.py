@@ -74,17 +74,20 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=60, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     
     # CORS Configuration
+    # For production: Use specific domain or allow_origin_regex for Vercel
     ALLOWED_ORIGINS: List[str] = Field(
         default=[
             "http://localhost:3000",
             "http://127.0.0.1:3000",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
-            "https://earth-pulse-v-1.vercel.app",
-            "https://*.vercel.app"
         ],
         env="ALLOWED_ORIGINS"
     )
+    # Vercel-specific: Use allow_origin_regex in CORS middleware
+    # This will be configured in main.py for production
+    VERCEL_DOMAIN: str = Field(default="https://earth-pulse-v-1.vercel.app", env="VERCEL_DOMAIN")
+
     ALLOWED_METHODS: List[str] = Field(
         default=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         env="ALLOWED_METHODS"

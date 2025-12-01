@@ -77,13 +77,31 @@ app = FastAPI(
 )
 
 # Configure CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
-    allow_methods=settings.ALLOWED_METHODS,
-    allow_headers=settings.ALLOWED_HEADERS,
-)
+# For Vercel: Need to use allow_origin_regex for preview deployments
+import re
+
+if settings.ENVIRONMENT == "production":
+    # Production: Allow specific domain + all Vercel preview URLs
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https://.*\.vercel\.app",  # Matches all Vercel deployments
+        allow_credentials=True,
+        allow_methods=settings.ALLOWED_METHODS,
+        allow_headers=settings.ALLOWED_HEADERS,
+    )
+    # Also add specific production domain
+    if settings.VERCEL_DOMAIN not in settings.ALLOWED_ORIGINS:
+        settings.ALLOWED_ORIGINS.append(settings.VERCEL_DOMAIN)
+else:
+    # Development: Use explicit origins
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.ALLOWED_ORIGINS,
+        allow_credentials=True,
+        allow_methods=settings.ALLOWED_METHODS,
+        allow_headers=settings.ALLOWED_HEADERS,
+    )
+
 
 # Include API routes
 app.include_router(environmental.router, prefix="/api/v1/environmental", tags=["Environmental Data"])
