@@ -76,25 +76,23 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS - Allow Vercel domains in all environments
-# Using regex to support all Vercel preview deployments
+# Configure CORS - Single middleware for all origins
+# FastAPI only allows CORSMiddleware to be added ONCE
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.vercel\.app",  # Matches all *.vercel.app domains
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://earth-pulse-v-1.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Allows all Vercel preview URLs
     allow_credentials=True,
     allow_methods=settings.ALLOWED_METHODS,
     allow_headers=settings.ALLOWED_HEADERS,
 )
 
-# Also add localhost for local development
-if settings.DEBUG:
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.ALLOWED_ORIGINS + ["http://localhost:5173", "http://localhost:3000"],
-        allow_credentials=True,
-        allow_methods=settings.ALLOWED_METHODS,
-        allow_headers=settings.ALLOWED_HEADERS,
-    )
 
 
 # Include API routes
