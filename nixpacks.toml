@@ -1,3 +1,7 @@
+# Force Python provider and disable Node.js detection
+[providers]
+python = "3.11"
+
 [phases.setup]
 nixPkgs = ["python311", "gcc", "gdal", "proj", "geos"]
 
