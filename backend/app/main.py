@@ -76,27 +76,21 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configure CORS
-# For Vercel: Need to use allow_origin_regex for preview deployments
-import re
+# Configure CORS - Allow Vercel domains in all environments
+# Using regex to support all Vercel preview deployments
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Matches all *.vercel.app domains
+    allow_credentials=True,
+    allow_methods=settings.ALLOWED_METHODS,
+    allow_headers=settings.ALLOWED_HEADERS,
+)
 
-if settings.ENVIRONMENT == "production":
-    # Production: Allow specific domain + all Vercel preview URLs
+# Also add localhost for local development
+if settings.DEBUG:
     app.add_middleware(
         CORSMiddleware,
-        allow_origin_regex=r"https://.*\.vercel\.app",  # Matches all Vercel deployments
-        allow_credentials=True,
-        allow_methods=settings.ALLOWED_METHODS,
-        allow_headers=settings.ALLOWED_HEADERS,
-    )
-    # Also add specific production domain
-    if settings.VERCEL_DOMAIN not in settings.ALLOWED_ORIGINS:
-        settings.ALLOWED_ORIGINS.append(settings.VERCEL_DOMAIN)
-else:
-    # Development: Use explicit origins
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.ALLOWED_ORIGINS,
+        allow_origins=settings.ALLOWED_ORIGINS + ["http://localhost:5173", "http://localhost:3000"],
         allow_credentials=True,
         allow_methods=settings.ALLOWED_METHODS,
         allow_headers=settings.ALLOWED_HEADERS,
