@@ -187,12 +187,12 @@ export const stories: StoryData[] = [
         },
         images: {
             before: {
-                url: '/images/stories/gorkha-2014.jpg',
+                url: '/images/stories/gorkha-2014.svg',
                 year: 2014,
                 caption: 'Before earthquake - stable hillsides'
             },
             after: {
-                url: '/images/stories/gorkha-2025.jpg',
+                url: '/images/stories/gorkha-2025.svg',
                 year: 2025,
                 caption: 'After earthquake - landslide scars visible'
             }
@@ -246,12 +246,12 @@ export const stories: StoryData[] = [
         },
         images: {
             before: {
-                url: '/images/stories/terai-2000.jpg',
+                url: '/images/stories/terai-2000.svg',
                 year: 2000,
                 caption: 'Terai 2000 - sparse forest coverage'
             },
             after: {
-                url: '/images/stories/terai-2025.jpg',
+                url: '/images/stories/terai-2025.svg',
                 year: 2025,
                 caption: 'Terai 2025 - thriving community forests'
             }
@@ -305,12 +305,12 @@ export const stories: StoryData[] = [
         },
         images: {
             before: {
-                url: '/images/stories/rara-2000.jpg',
+                url: '/images/stories/rara-2000.svg',
                 year: 2000,
                 caption: 'Rara Lake 2000 - pristine waters'
             },
             after: {
-                url: '/images/stories/rara-2025.jpg',
+                url: '/images/stories/rara-2025.svg',
                 year: 2025,
                 caption: 'Rara Lake 2025 - still pristine'
             }

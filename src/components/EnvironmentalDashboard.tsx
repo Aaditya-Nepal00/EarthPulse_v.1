@@ -33,6 +33,7 @@ interface Indicator {
     details: string
     isLoading?: boolean
     error?: string
+    chartData?: number[]
 }
 
 const EnvironmentalDashboard: React.FC<EnvironmentalDashboardProps> = ({
@@ -144,7 +145,8 @@ const EnvironmentalDashboard: React.FC<EnvironmentalDashboardProps> = ({
                             trend: trend || 'stable',
                             status: status || 'stable',
                             isLoading: false,
-                            error: undefined
+                            error: undefined,
+                            chartData: data?.data_points?.map((p: any) => p.value) || []
                         }
                     } catch (error) {
                         console.error(`Failed to fetch ${indicator.id} data:`, error)
@@ -376,10 +378,18 @@ const EnvironmentalDashboard: React.FC<EnvironmentalDashboardProps> = ({
                                             </button>
                                         </div>
 
-                                        {/* Mini Chart Placeholder */}
+                                        {/* Mini Chart - Spatial/Data Distribution */}
                                         <div className="h-16 bg-gradient-to-r from-gray-800 to-gray-700 rounded-lg p-2 flex items-end space-x-1 gap-1">
-                                            {Array.from({ length: 12 }, (_, i) => {
-                                                const heightPercent = Math.max(20 + Math.random() * 80, 20)
+                                            {(indicator.chartData && indicator.chartData.length > 0 ? indicator.chartData.slice(0, 20) : Array.from({ length: 12 }, () => 0.5)).map((val, i) => {
+                                                // Normalize value for display (assuming range 0-1 for NDVI, others scaled)
+                                                let normalizedHeight = val;
+                                                if (indicator.unit === '°C') normalizedHeight = (val - 0) / 40; // 0-40C range
+                                                if (indicator.unit === 'km²') normalizedHeight = val / 2000; // Max 2000
+                                                if (indicator.unit === 'NDVI') normalizedHeight = val;
+
+                                                // Clamp to 0.1-1.0
+                                                const heightPercent = Math.min(Math.max(normalizedHeight * 100, 10), 100);
+
                                                 return (
                                                     <div
                                                         key={i}
@@ -388,11 +398,12 @@ const EnvironmentalDashboard: React.FC<EnvironmentalDashboardProps> = ({
                                                             height: `${heightPercent}%`,
                                                             backgroundColor: indicator.color === 'green' ? '#4ade80'
                                                                 : indicator.color === 'blue' ? '#60a5fa'
-                                                                : indicator.color === 'orange' ? '#fb923c'
-                                                                : indicator.color === 'red' ? '#f87171'
-                                                                : '#3b82f6',
+                                                                    : indicator.color === 'orange' ? '#fb923c'
+                                                                        : indicator.color === 'red' ? '#f87171'
+                                                                            : '#3b82f6',
                                                             opacity: 0.6
                                                         }}
+                                                        title={`Value: ${val.toFixed(2)}`}
                                                     />
                                                 )
                                             })}

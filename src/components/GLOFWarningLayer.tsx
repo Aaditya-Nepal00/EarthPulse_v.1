@@ -6,13 +6,12 @@
 import React, { useState } from 'react'
 import { Marker, Popup } from 'react-leaflet'
 import { divIcon } from 'leaflet'
-import { motion, AnimatePresence } from 'framer-motion'
 import { glofLakes, getRiskLevelColor, getRiskLevelLabel } from '../data/glofLakes'
 import { useLanguage } from '../i18n/LanguageContext'
 
 const GLOFWarningLayer: React.FC = () => {
     const { language, t } = useLanguage()
-    const [selectedLake, setSelectedLake] = useState<string | null>(null)
+    const [, setSelectedLake] = useState<string | null>(null)
 
     const createGLOFIcon = (riskLevel: 'critical' | 'high' | 'medium') => {
         const color = getRiskLevelColor(riskLevel)

@@ -13,11 +13,11 @@ import StoryComparisonChart from './StoryComparisonChart'
 
 interface StorytellingModalProps {
   onClose: () => void
-  currentYear: number
-  selectedIndicator: string
+  currentYear?: number
+  selectedIndicator?: string
 }
 
-const StorytellingModal: React.FC<StorytellingModalProps> = ({ onClose, currentYear, selectedIndicator }) => {
+const StorytellingModal: React.FC<StorytellingModalProps> = ({ onClose }) => {
   const { language, t } = useLanguage()
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
