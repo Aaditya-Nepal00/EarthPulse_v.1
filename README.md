@@ -1,6 +1,8 @@
 # 🌍 EarthPulse
 
-> *"Because checking if glaciers are melting should be more fun than doom-scrolling social media"*
+⚠️ Warning: Don’t believe anything here.
+I’m just yapping random nonsense.
+This README does not make the project look or work the way it actually is — it basically sounds like I pulled a random project out of thin air with zero context. Proceed carefully.
 
 [![Made with React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -109,7 +111,7 @@ You'll need:
 
 **Step 1: Clone this bad boy**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/Aaditya-Nepal00/EarthPulse_v.1
 cd EarthPulse
 ```
 
@@ -214,21 +216,23 @@ MIT License - Do whatever you want with it. Build a startup, impress your friend
 - **Me** - For actually finishing this project instead of abandoning it like the other 47 projects
 - **You** - For reading this README (seriously, you made it this far?)
 
-## 📞 Contact
+📞 Contact
 
 Found a bug? Have a suggestion? Want to tell me how you used this for your research?
 
-- **Issues**: Open one on GitHub
-- **Questions**: Also GitHub issues (I check them, I promise)
-- **Compliments**: Always welcome in GitHub discussions
+Issues: Open one on GitHub
+
+Questions: Also GitHub issues (I check them, I promise)
+
+Compliments: Always welcome in GitHub discussions… just kidding, probably won’t even read them
+
+Updates: Yeah… don’t even think about it, I’m probably never opening this again
 
 ---
 
 <div align="center">
 
 **Made with 💙 (and a questionable amount of late nights)**
-
-*Remember: The glaciers are melting, but at least the visualization is cool* 🧊🔥
 
 ![Footer](./picture/img8.png)
 
