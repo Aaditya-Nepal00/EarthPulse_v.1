@@ -1,241 +1,237 @@
-# EarthPulse
+# 🌍 EarthPulse
 
-> **EarthPulse** — Interactive NASA Earth Observation data visualizer. Because staring at satellite images makes you feel like a responsible data scientist for approximately 10 seconds.
+> *"Because checking if glaciers are melting should be more fun than doom-scrolling social media"*
 
-A modern React + FastAPI playground that brings together NASA-style earth observation data, interactive map visualizations, temporal analysis, and just enough polish to make you feel proud showing it to friends.
+[![Made with React](https://img.shields.io/badge/React-18.2.0-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110.0-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Powered by NASA](https://img.shields.io/badge/Powered%20by-NASA%20🚀-0B3D91?style=for-the-badge)](https://api.nasa.gov/)
+[![Hobby Project](https://img.shields.io/badge/Status-Built%20for%20Fun-FF69B4?style=for-the-badge)](https://github.com)
 
-## Why I Built This
+## 🎯 What's This All About?
 
-**The Professional Answer:**  
-I wanted to build an end-to-end full-stack project that actually *means* something. Integrating geospatial data, async APIs, real-time map rendering, and a polished UI in one codebase seemed like a solid learning goal. Plus, environmental data visualization is genuinely cool—there's something satisfying about watching change unfold on a map over 25 years.
+EarthPulse is my hobby project where I decided to combine my love for space, data visualization, and the Himalayas into one cosmic web app. It's basically Google Earth's cooler cousin who listens to lo-fi beats and actually knows how to interpret satellite data.
 
-**The Real Answer:**  
-I got tired of toy projects that only taught one thing. This one touches React, TypeScript, FastAPI, async Python, geospatial libraries, API integration, state management, animations, and deployment considerations—all without feeling like a tutorial project. Also, maps are awesome.
+**TL;DR**: A NASA satellite data visualization platform that lets you watch the Nepal Himalayas change over time. It's like watching glaciers retreat, but with more pixels and way cooler animations. 🏔️✨
 
-This repo is intentionally a *hobby project*—not production-hardened, but clean enough to learn from and extend. Think of it as "what I wish existed when I started learning full-stack development."
+![EarthPulse Demo](./picture/img.png)
 
-## What You Get
+## 🤔 Why Did I Build This?
 
-- **Frontend**: React + TypeScript + Vite, with Leaflet for mapping, Framer Motion for animations, TailwindCSS for styling, and Zustand for state. Includes time sliders, comparison tools, storytelling modals, and a responsive dashboard.
-- **Backend**: FastAPI with async/await patterns, mock data simulation (so you can run it offline), and hooks for real NASA APIs. Includes geospatial processing libraries.
-- **Dev Experience**: Hot reload on both frontend and backend. Mock data means you're not blocked by API keys during development.
+Good question! I built this because:
+- ✅ I wanted to learn how to work with real NASA APIs (and actually succeeded!)
+- ✅ Watching numbers go brrr on interactive charts is oddly satisfying
+- ✅ I needed an excuse to learn FastAPI and React Query
+- ✅ Climate data visualization shouldn't look like it's from the 90s
+- ✅ I ran out of Netflix shows to watch
 
-## Tech Stack
+Somewhere along the way, this went from "quick weekend project" to a full-blown application with 8 environmental indicators, a cosmic UI theme, and more NASA API integrations than I initially planned. Whoops. 🙃
 
-**Frontend:**
-- React 18 + TypeScript
-- Vite (lightning-fast bundler)
-- TailwindCSS + Framer Motion (styling + smooth animations)
-- Leaflet + react-leaflet (interactive maps)
-- @tanstack/react-query (data fetching)
-- Zustand (lightweight state management)
+## ✨ Features That Actually Work
 
-**Backend:**
-- FastAPI (async Python web framework)
-- Uvicorn (ASGI server)
-- Pydantic (data validation)
-- Geospatial: rasterio, geopandas, shapely, pyproj
-- Data processing: numpy, pandas, pillow, matplotlib
+### 🛰️ Real NASA Satellite Data
+- **MODIS**: Because measuring vegetation from space is cool
+- **VIIRS**: Tracking city lights (urban expansion goes brrrr)
+- **Landsat**: Old reliable for glacier monitoring
+- **GIBS**: Real-time satellite imagery (the fancy stuff)
 
-## Screenshots
+### 📊 Environmental Indicators
+1. **NDVI** - How green is green? (spoiler: it's complicated)
+2. **Glacier Coverage** - Ice ice baby... getting smaller 🧊
+3. **Urban Expansion** - Cities: the real-life SimCity
+4. **Temperature** - It's getting hot in here 🌡️
+5. **GLOF Risk** - Glacial lake monitoring (yes, it's a thing)
+6. **Forest Cover** - Tree hugger metrics
+7. **Landslide Risk** - Mountain stability check
+8. **Earthquake Recovery** - Post-2015 Nepal earthquake analysis
 
-Here's what the app looks like in action:
+### 🎨 UI That Doesn't Hurt Your Eyes
+- Cosmic/space theme (because why not?)
+- Animated stars in the background (purely decorative, adds 0 value, looks cool)
+- Dark mode (there's no light mode because I said so)
+- Actually responsive (yes, it works on mobile!)
+- Smooth animations that'll make you say "ooh"
 
-### Dashboard & Main Interface
-![Screenshot 1](./picture/img.png)
-![Screenshot 2](./picture/img2.png)
+### 🗺️ Interactive Map Features
+- Built with Leaflet (still the GOAT of mapping libraries)
+- Time slider from 2000-2025 (time travel, sort of)
+- Click on data points to see details
+- Compare data between years
+- Export everything (because data belongs to the people!)
 
-### Map Visualization & Controls
-![Screenshot 3](./picture/img3.png)
-![Screenshot 4](./picture/img4.png)
+![More Screenshots](./picture/img2.png)
+![Even More](./picture/img3.png)
 
-### Data Analysis & Comparison Tools
-![Screenshot 5](./picture/img5.png)
-![Screenshot 6](./picture/img6.png)
+## 🛠️ Tech Stack (The Nerdy Stuff)
 
-### Advanced Features
-![Screenshot 7](./picture/img7.png)
-![Screenshot 8](./picture/img8.png)
-![Screenshot 9](./picture/img9.png)
+### Frontend (The Pretty Part)
+```
+React 18.2      - Because hooks are life
+TypeScript      - Fewer bugs, more autocomplete
+Vite            - Blazingly fast™ development
+TailwindCSS     - Utility classes go brrr
+Leaflet         - Maps, but make it interactive
+Framer Motion   - Animations smoother than butter
+Zustand         - State management (Redux who?)
+TanStack Query  - API calls with superpowers
+```
 
-## Quick Start
+### Backend (The Brain)
+```
+FastAPI         - Python, but make it async
+Uvicorn         - ASGI server that zooms
+Pydantic        - Type validation (TypeScript's Python cousin)
+rasterio        - Geospatial data witchcraft
+geopandas       - Pandas, but with coordinates
+httpx           - async HTTP client (requests 2.0)
+NumPy/Pandas    - Number crunching essentials
+```
+
+### NASA APIs (The Data Source)
+```
+NASA CMR        - Common Metadata Repository
+NASA GIBS       - Global Imagery Browse Services
+MODIS           - Moderate Resolution Imaging Spectroradiometer
+VIIRS           - Visible Infrared Imaging Radiometer Suite
+Landsat         - The OG Earth observation satellite
+```
+
+## 🚀 Running This Beast Locally
 
 ### Prerequisites
-- **Node.js** 16+ and npm
-- **Python** 3.10+
-- Git
+You'll need:
+- Node.js (v16+) - for the frontend magic
+- Python (3.8+) - for the backend wizardry
+- NASA API keys (optional, works without them too!)
+- A decent internet connection
+- Willingness to troubleshoot (it's a hobby project, after all)
 
-### 1. Clone the Repository
+### The "I Just Want It To Work" Guide
 
-```powershell
-git clone https://github.com/Aaditya-Nepal00/EarthPulse.git
+**Step 1: Clone this bad boy**
+```bash
+git clone <your-repo-url>
 cd EarthPulse
 ```
 
-### 2. Frontend Setup (Terminal 1)
-
-```powershell
-cd 'C:\Users\aadit\OneDrive\Desktop\hobbyP\EarthPulse'
+**Step 2: Frontend Setup**
+```bash
+# Install dependencies (this might take a minute... or five)
 npm install
+
+# Start the dev server
 npm run dev
 ```
+Your browser should open to `http://localhost:3000` automatically. If it doesn't, your browser is being shy.
 
-The dev server will start at `http://localhost:5173`. Vite will print the exact URL—open it in your browser.
+**Step 3: Backend Setup**
+```bash
+# Navigate to backend
+cd backend
 
-### 3. Backend Setup (Terminal 2)
+# Create a virtual environment (optional but recommended)
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-```powershell
-cd 'C:\Users\aadit\OneDrive\Desktop\hobbyP\EarthPulse\backend'
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the server
+python -m uvicorn app.main:app --host localhost --port 8000 --reload
 ```
 
-Then run the server:
+The backend will be chilling at `http://localhost:8000`. Visit `/api/docs` for the Swagger UI because we're fancy like that.
 
-```powershell
-uvicorn app.main:app --reload --port 8000
+### NASA API Keys (Optional But Cool)
+
+Want real NASA data instead of the simulated stuff?
+
+1. Get your API keys from:
+   - NASA API: https://api.nasa.gov/
+   - NASA Earthdata: https://urs.earthdata.nasa.gov/
+
+2. Create a `.env` file in the `backend/` folder:
+```env
+NASA_API_KEY=your_super_secret_key_here
+NASA_IMAGERY_API_KEY=your_other_super_secret_key_here
 ```
 
-The API will be available at `http://localhost:8000`. Check `http://localhost:8000/api/docs` for interactive API documentation (in debug mode).
+3. Restart the backend
 
-### 4. (Optional) Configure Environment
+4. Watch real satellite data flow in! 🛰️
 
-Create a `.env` file in the `backend/` folder to customize behavior:
+**Pro tip**: The app works perfectly fine without API keys. It'll use simulated data that's surprisingly realistic. I spent way too much time making the simulation look convincing.
 
-```text
-USE_MOCK_DATA=true
-HOST=127.0.0.1
-PORT=8000
-DEBUG=true
-LOG_LEVEL=INFO
-# NASA_API_KEY=your_key_here  (optional, for real NASA data)
-```
+## 📸 More Eye Candy
 
-By default, the app runs with mock data, so you can test everything without needing API credentials.
+![Dashboard](./picture/img4.png)
+*The environmental dashboard - where numbers become art*
 
-### 5. Open the App
+![Comparison Tool](./picture/img5.png)
+*Time travel between years (disclaimer: not actual time travel)*
 
-- Frontend: `http://localhost:5173`
-- Backend API: `http://localhost:8000`
-- API Docs: `http://localhost:8000/api/docs` (if DEBUG=true)
+![Storytelling](./picture/img6.png)
+*Environmental stories, because data should tell a story*
 
-## Project Structure
+![Dark Theme Glory](./picture/img7.png)
+*The cosmic theme in all its glory*
 
-```
-EarthPulse/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI entry point
-│   │   ├── config/
-│   │   │   └── settings.py       # Configuration & environment vars
-│   │   ├── routes/
-│   │   │   ├── environmental.py  # Environmental data endpoints
-│   │   │   ├── maps.py           # Map tile & service endpoints
-│   │   │   └── reports.py        # Report generation endpoints
-│   │   ├── services/
-│   │   │   ├── nasa_api.py       # NASA API integration (mock + real)
-│   │   │   ├── map_service.py    # Map processing & tiles
-│   │   │   └── data_simulation.py # Mock data generation
-│   │   ├── models/
-│   │   │   ├── environmental.py  # Environmental data models
-│   │   │   └── geographic.py     # Geographic data models
-│   │   └── utils/
-│   │       └── helpers.py        # Utility functions
-│   └── requirements.txt
-│
-├── src/
-│   ├── main.tsx                  # React entry point
-│   ├── App.tsx                   # Main app layout
-│   ├── components/
-│   │   ├── MapContainer.tsx      # Leaflet map component
-│   │   ├── TimeSlider.tsx        # Temporal controls
-│   │   ├── EnvironmentalDashboard.tsx
-│   │   ├── ComparisonTool.tsx
-│   │   ├── StorytellingModal.tsx
-│   │   ├── DownloadPanel.tsx
-│   │   └── ...other components
-│   ├── services/
-│   │   └── api.ts                # Frontend API client
-│   ├── i18n/
-│   │   └── translations.ts       # Internationalization
-│   └── data/
-│       ├── stories.ts            # Sample data & narratives
-│       └── glofLakes.ts          # Geographic data
-│
-├── package.json                  # Frontend dependencies
-├── vite.config.ts                # Vite configuration
-├── tsconfig.json                 # TypeScript config
-├── tailwind.config.js            # TailwindCSS config
-└── README.md                      # You are here
-```
+## 🎮 How to Use
 
-## How to Use (Basic Flow)
+1. **Pick a Year**: Use the time slider at the bottom (2000-2025)
+2. **Choose an Indicator**: Click on NDVI, Glacier, Urban, etc.
+3. **Explore the Map**: Zoom, pan, click on data points
+4. **Compare**: Hit the comparison tool to see changes over time
+5. **Read Stories**: Click "Stories" for narrative data visualization
+6. **Export**: Download data in PDF, Excel, or GeoJSON format
+7. **Profit**: Share with friends and pretend you're a climate scientist
 
-1. **Load the app** → Frontend boots, initializes the Leaflet map centered on Nepal Himalayas.
-2. **Select an indicator** → Choose from NDVI, Glacier coverage, Urban expansion, or Temperature.
-3. **Adjust the year** → Use the time slider to scrub through 2000–2025.
-4. **Explore the data** → Map updates with new data; dashboard shows stats and trends.
-5. **Compare regions** → Open the comparison tool to see side-by-side analysis.
-6. **Download results** → Export data as charts, GeoJSON, or reports.
+## 🐛 Known Issues (Features, Really)
 
-## Features
+- Sometimes the map gets a bit temperamental on first load (just refresh, it's shy)
+- The cosmic background might cause existential thoughts about our place in the universe
+- Time slider animations might be *too* smooth (not sorry)
+- You might learn actual facts about the Himalayas (side effect)
 
-- **Interactive Maps** — Leaflet-based visualization with zoom, pan, and layer controls.
-- **Time Series Analysis** — Scrub through 25+ years of environmental data.
-- **Comparison Tool** — Side-by-side regional analysis.
-- **Storytelling** — Narrative-driven insights tied to specific data points.
-- **Data Export** — Download maps, charts, and raw data.
-- **Responsive UI** — Works on desktop (mobile support in progress).
-- **Mock Data by Default** — No API keys needed to get started.
+## 🤝 Contributing
 
-## Common Issues & Troubleshooting
+This is a hobby project, but if you want to contribute:
+1. Fork it
+2. Break it
+3. Fix it
+4. Make a PR
+5. I'll probably merge it because I trust you
 
-### Windows: Geospatial library installation fails
-Geospatial libraries (`rasterio`, `geopandas`, `shapely`) require native C dependencies. Try:
-- **Option A (Recommended)**: Use WSL (Windows Subsystem for Linux)
-- **Option B**: Use conda instead of pip for the backend:
-  ```powershell
-  conda create -n earthpulse python=3.10
-  conda activate earthpulse
-  conda install -c conda-forge geopandas rasterio
-  pip install -r requirements.txt
-  ```
+Or just star the repo. Stars make me happy. ⭐
 
-### Backend won't start — ModuleNotFoundError
-Make sure you're running uvicorn from the correct directory. From the repo root:
-```powershell
-uvicorn backend.app.main:app --reload --port 8000
-```
+## 📝 License
 
-Or from the `backend/` folder:
-```powershell
-uvicorn app.main:app --reload --port 8000
-```
+MIT License - Do whatever you want with it. Build a startup, impress your friends, use it for your thesis. Just don't blame me if the glaciers don't match your expectations.
 
-### Frontend can't reach the backend
-Check that the backend URL in `src/services/api.ts` matches where your backend is running (default: `http://localhost:8000`). Update if needed.
+## 🙏 Acknowledgments
 
-## Contributing / Extending
+- **NASA** - For making satellite data publicly available (you're the real MVP)
+- **The Internet** - For Stack Overflow answers at 3 AM
+- **Me** - For actually finishing this project instead of abandoning it like the other 47 projects
+- **You** - For reading this README (seriously, you made it this far?)
 
-Want to add features or improve the project?
+## 📞 Contact
 
-- **New Data Indicator?** Add a route in `backend/app/routes/environmental.py`, wire it to the frontend in `EnvironmentalDashboard.tsx`.
-- **Real NASA APIs?** Implement actual calls in `backend/app/services/nasa_api.py` and toggle `USE_MOCK_DATA=false`.
-- **Better UI?** The design is clean but minimal—Framer Motion is already in the stack, so animations are fair game.
-- **Tests?** The backend has pytest configured. Add tests in a `tests/` folder.
+Found a bug? Have a suggestion? Want to tell me how you used this for your research?
 
-## Notes & Caveats
-
-- **Hobby Project Status**: This is *not* production-ready. It uses mock data, in-memory caching, and a few shortcuts. Deploy at your own risk.
-- **No Real API Keys Built In**: I didn't hardcode NASA API keys (security: 1 point). To use real data, add your own key in `.env`.
-- **Geospatial Dependencies**: Installing `rasterio` and `geopandas` on Windows can be finicky. WSL or conda are your friends.
-
-## License
-
-This project is free to use, modify, and share.
+- **Issues**: Open one on GitHub
+- **Questions**: Also GitHub issues (I check them, I promise)
+- **Compliments**: Always welcome in GitHub discussions
 
 ---
 
-**Built with ☕ and occasional frustration by Aaditya.**
+<div align="center">
 
-If you clone this and get it working, drop a star ⭐. If it breaks, file an issue and I'll help. If it works perfectly, assume I got lucky and move on.
+**Made with 💙 (and a questionable amount of late nights)**
 
+*Remember: The glaciers are melting, but at least the visualization is cool* 🧊🔥
+
+![Footer](./picture/img8.png)
+
+[⭐ Star this repo](https://github.com) • [🐛 Report Bug](https://github.com) • [✨ Request Feature](https://github.com)
+
+</div>
